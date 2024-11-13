@@ -1,0 +1,94 @@
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *
+ * @category    design
+ * @package     Sinabs_Directcheckout
+ * @copyright   Copyright (c) 2014 Sinabs (http://www.sinabs.fr)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+?>
+<?php
+/**
+ * @see Sinabs_Directcheckout_Block_Checkout_Gift
+ */
+?>
+<?php $_helper = Mage::helper('directcheckout'); 
+$giftEnabled = $_helper->isGiftMessageEnabled(); ?>
+
+<?php if ($giftEnabled) : 
+	$giftPrice = $_helper->getGiftMessagePrice();
+	if (isset($giftPrice)) {
+		$giftPriceString = Mage::helper('core')->currency($giftPrice, true, false);
+	} ?>
+	
+	<div class="gift-option">
+		<div class="inner-box">
+	        <div class="input-checkbox">
+	            <input type="checkbox" name="allow_gift_messages" id="allow_gift_messages" value="1"  <?php if($this->isGiftProductInCart()): ?>checked="checked"<?php endif ?> />
+	            <label for="allow_gift_messages"><?php echo $this->__('Gift message %s', $giftPriceString) ?></label>
+	        </div>
+	    </div>
+	    <div class="directcheckout-comments" id="allow-gift-message-container">
+	        <textarea id="gift-message" class="input-text validation-passed giftmessage-area" name="giftmessage" title="<?php echo $this->__('Message') ?>" rows="5" cols="40"></textarea>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+		var url='<?php echo Mage::getUrl('directcheckout/ajax/manageGift', array('_secure' => true)); ?>';
+		var gift_checked = $('allow_gift_messages').checked;
+	
+	    if(!gift_checked)    {
+	        $('allow-gift-message-container').hide();
+	        $('gift-message').value = '';
+	    }
+	
+	    $('allow_gift_messages').observe('click', function(e) {
+	        var element = e.element();
+	        var parameters = {
+	        	
+	        };
+	        
+	        if(element.checked)    {
+	            $('allow-gift-message-container').show();
+	            parameters['add'] = true;
+	        }
+	        else    {
+	            $('allow-gift-message-container').hide();
+	            $('gift-message').value = '';
+	            parameters['add'] = false;
+	        }
+	        
+	        new Ajax.Request(url, {
+                method: 'post',
+                parameters: parameters,
+                onLoading: function() {
+                	$('review_order').update('<div class="loading-ajax">&nbsp;</div>');
+                },
+                onSuccess: function(response)  {
+                	var result = response.responseText.evalJSON();
+                	
+                	if (result.summary) {
+                		$('review_order').update(result.summary);
+                	}
+                }
+            });
+	    });
+	</script>
+<?php endif; ?>
